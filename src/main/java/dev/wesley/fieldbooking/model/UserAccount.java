@@ -1,5 +1,6 @@
 package dev.wesley.fieldbooking.model;
 
+import dev.wesley.fieldbooking.model.Enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -37,6 +38,11 @@ public class UserAccount {
     @Column(nullable = false)
     private boolean active;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", length = 20, nullable = false)
+    @Builder.Default
+    private UserRole role = UserRole.USER;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
@@ -46,12 +52,7 @@ public class UserAccount {
     private OffsetDateTime updatedAt;
 
     /* Relacionamentos 1:1 (opcionais) */
-    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL, orphanRemoval = true)
     private Profile profile;
-
-    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private Player player;
-
-    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private Manager manager;
 }
