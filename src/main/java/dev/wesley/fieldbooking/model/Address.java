@@ -9,7 +9,11 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "addresses")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Address {
 
     @Id
@@ -39,7 +43,7 @@ public class Address {
     private String state; // UF
 
     @Size(max = 12)
-    @Column(name = "zip_code", length = 12) // casa com a coluna do SQL
+    @Column(name = "zip_code", length = 12)
     private String zipCode; // CEP
 
     @Size(max = 120)

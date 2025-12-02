@@ -10,17 +10,21 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "players")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Player {
 
     @Id
-    private UUID id; // mesmo id do User
+    private UUID id; // mesmo id do Profile
 
     @OneToOne
     @MapsId
     @JoinColumn(name = "id",
-            foreignKey = @ForeignKey(name = "fk_players_user"))
-    private UserAccount user;
+            foreignKey = @ForeignKey(name = "fk_players_profile"))
+    private Profile profile;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "skill_level", nullable = false, length = 20)
@@ -32,7 +36,7 @@ public class Player {
     private Position preferredPosition;
 
     @Column(name = "rating", precision = 2, scale = 1) // ex: 4.5
-    private BigDecimal rating; // <-- trocado para BigDecimal
+    private BigDecimal rating;
 
     @Column(length = 500)
     private String bio;
