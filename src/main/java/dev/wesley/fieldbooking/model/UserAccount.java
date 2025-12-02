@@ -26,6 +26,12 @@ public class UserAccount {
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
+    @Column(name = "first_name", length = 80)
+    private String firstName;
+
+    @Column(name = "last_name", length = 80)
+    private String lastName;
+
     @Column(nullable = false, length = 160)
     private String email;
 
@@ -51,7 +57,6 @@ public class UserAccount {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    /* Relacionamentos 1:1 (opcionais) */
     @OneToOne(mappedBy = "user", fetch = FetchType.LAZY,
             cascade = CascadeType.ALL, orphanRemoval = true)
     private Profile profile;

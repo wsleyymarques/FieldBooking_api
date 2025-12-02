@@ -23,7 +23,6 @@ public class CustomUserDetailsService implements UserDetailsService {
         UserAccount user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        // Por enquanto, papel fixo. Depois você pode ligar com Manager/Player etc.
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
 
         return new org.springframework.security.core.userdetails.User(

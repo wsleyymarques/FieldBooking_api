@@ -46,6 +46,7 @@ public class AuthService {
         String passwordHash = passwordEncoder.encode(request.password());
 
         UserAccount user = UserAccount.builder()
+                .firstName(request.firstName())
                 .email(request.email())
                 .passwordHash(passwordHash)
                 .phone(request.phone())
