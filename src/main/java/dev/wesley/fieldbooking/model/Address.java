@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.annotations.Type;
+import org.locationtech.jts.geom.Point;
 
 import java.util.UUID;
 
@@ -52,4 +54,13 @@ public class Address {
 
     private Double latitude;
     private Double longitude;
+
+    /**
+     * Geography column (PostGIS). Stored as SRID 4326 (lon/lat).
+     * columnDefinition uses `geography` to allow distance in meters easily.
+     */
+    @Column(columnDefinition = "geography(Point,4326)")
+    private Point geom;
+
+    // Helper convenience setters to keep lat/lon and geom in sync (see service example).
 }
