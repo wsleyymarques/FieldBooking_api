@@ -26,6 +26,20 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    private static String[] splitName(String fullName) {
+        if (fullName == null) return new String[]{"", ""};
+
+        String normalized = fullName.trim().replaceAll("\\s+", " ");
+        if (normalized.isBlank()) return new String[]{"", ""};
+
+        String[] parts = normalized.split(" ", 2);
+        String first = parts[0];
+        String last = (parts.length > 1) ? parts[1] : "";
+
+        return new String[]{first, last};
+    }
+
+
     public AuthResponse authenticate(AuthRequest request) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -39,14 +53,33 @@ public class AuthService {
     }
 
     public AuthResponse register(RegisterRequest request) {
-        if(userRepository.existsByEmail(request.email())) {
+        if (userRepository.existsByEmail(request.email())) {
             throw new IllegalArgumentException("Email ja cadastrado");
         }
 
         String passwordHash = passwordEncoder.encode(request.password());
 
+        String firstName = null;
+        String lastName = null;
+
+        if (request.firstName() != null && !request.firstName().isBlank()) {
+            firstName = request.firstName().trim();
+            lastName = (request.lastName() != null && !request.lastName().isBlank())
+                    ? request.lastName().trim()
+                    : null;
+        }
+        else if (request.name() != null && !request.name().isBlank()) {
+            String[] nameParts = splitName(request.name());
+            firstName = nameParts[0];
+            lastName = nameParts[1].isBlank() ? null : nameParts[1];
+        }
+        else {
+            throw new IllegalArgumentException("Nome é obrigatório");
+        }
+
         UserAccount user = UserAccount.builder()
-                .firstName(request.firstName())
+                .firstName(firstName)
+                .lastName(lastName)
                 .email(request.email())
                 .passwordHash(passwordHash)
                 .phone(request.phone())
@@ -62,9 +95,9 @@ public class AuthService {
         );
 
         String jwt = jwtService.generateToken(springUser);
-
         return new AuthResponse(jwt);
     }
+
 
     public void updateAccount(UserAccount user ,UpdateAccountRequest request) {
 
