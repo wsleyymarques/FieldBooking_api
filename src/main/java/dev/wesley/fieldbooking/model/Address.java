@@ -22,6 +22,10 @@ public class Address {
     @Column(columnDefinition = "uuid")
     private UUID id;
 
+    @Size(max = 2)
+    @Column(length = 2)
+    private String country;
+
     @Size(max = 120)
     @Column(length = 120)
     private String street;
@@ -49,6 +53,14 @@ public class Address {
     @Size(max = 120)
     @Column(length = 120)
     private String complement;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "store_id", foreignKey = @ForeignKey(name = "fk_addresses_store"))
+    private Store store;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "profile_id", foreignKey = @ForeignKey(name = "fk_addresses_profile"))
+    private Profile profile;
 
     private Double latitude;
     private Double longitude;
