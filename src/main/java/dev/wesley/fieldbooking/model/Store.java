@@ -26,12 +26,10 @@ public class Store {
     @Column(unique = true)
     private String cnpj;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(
-            name = "address_id",
-            foreignKey = @ForeignKey(name = "fk_stores_address")
-    )
-    private Address address;
+    @OneToMany(mappedBy = "store", fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<Address> addresses = new java.util.ArrayList<>();
+
 
     @Size(max = 120) private String contactEmail;
     @Size(max = 20)  private String contactPhone;

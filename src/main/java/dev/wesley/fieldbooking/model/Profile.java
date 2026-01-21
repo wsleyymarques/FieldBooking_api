@@ -37,8 +37,8 @@ public class Profile {
             cascade = CascadeType.ALL, orphanRemoval = true)
     private Player player;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "address_id",
-            foreignKey = @ForeignKey(name = "fk_profiles_address"))
-    private Address address;
+    @OneToMany(mappedBy = "profile", fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<Address> addresses = new java.util.ArrayList<>();
+
 }
