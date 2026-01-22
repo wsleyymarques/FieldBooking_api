@@ -57,7 +57,7 @@ public class UserAccount {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY,
-            cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
     private Profile profile;
+
 }

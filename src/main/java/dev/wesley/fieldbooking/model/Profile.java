@@ -24,14 +24,13 @@ public class Profile {
             foreignKey = @ForeignKey(name = "fk_profiles_user"))
     private UserAccount user;
 
-
     private LocalDate birthDate;
-
-    @Column(name = "document_id", length = 32)
-    private String documentId;
 
     @Column(name = "avatar_url", length = 512)
     private String avatarUrl;
+
+    @Column(length = 500)
+    private String bio;
 
     @OneToOne(mappedBy = "profile", fetch = FetchType.LAZY,
             cascade = CascadeType.ALL, orphanRemoval = true)
@@ -40,5 +39,4 @@ public class Profile {
     @OneToMany(mappedBy = "profile", fetch = FetchType.LAZY,
             cascade = CascadeType.ALL, orphanRemoval = true)
     private java.util.List<Address> addresses = new java.util.ArrayList<>();
-
 }

@@ -38,6 +38,15 @@ public class Player {
     @Column(name = "rating", precision = 2, scale = 1) // ex: 4.5
     private BigDecimal rating;
 
-    @Column(length = 500)
-    private String bio;
+    @Column(name = "goals", nullable = false)
+    @Builder.Default
+    private Integer goals = 0;
+
+    @Column(name = "assists", nullable = false)
+    @Builder.Default
+    private Integer assists = 0;
+
+    @Column(name = "matches_played", nullable = false)
+    @Builder.Default
+    private Integer matchesPlayed = 0;
 }
