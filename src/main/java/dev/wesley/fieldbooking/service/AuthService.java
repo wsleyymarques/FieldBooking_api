@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
 
@@ -25,6 +26,8 @@ public class AuthService {
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
+    private final ProfileService profileService; // ✅ NOVO
 
     private static String[] splitName(String fullName) {
         if (fullName == null) return new String[]{"", ""};
@@ -39,19 +42,16 @@ public class AuthService {
         return new String[]{first, last};
     }
 
-
     public AuthResponse authenticate(AuthRequest request) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.email(),
-                        request.password()
-                )
+                new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
 
-        String jwt = jwtService.generateToken((org.springframework.security.core.userdetails.User) authentication.getPrincipal());
+        String jwt = jwtService.generateToken((User) authentication.getPrincipal());
         return new AuthResponse(jwt);
     }
 
+    @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
             throw new IllegalArgumentException("Email ja cadastrado");
@@ -59,21 +59,19 @@ public class AuthService {
 
         String passwordHash = passwordEncoder.encode(request.password());
 
-        String firstName = null;
-        String lastName = null;
+        String firstName;
+        String lastName;
 
         if (request.firstName() != null && !request.firstName().isBlank()) {
             firstName = request.firstName().trim();
             lastName = (request.lastName() != null && !request.lastName().isBlank())
                     ? request.lastName().trim()
                     : null;
-        }
-        else if (request.name() != null && !request.name().isBlank()) {
+        } else if (request.name() != null && !request.name().isBlank()) {
             String[] nameParts = splitName(request.name());
             firstName = nameParts[0];
             lastName = nameParts[1].isBlank() ? null : nameParts[1];
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("Nome é obrigatório");
         }
 
@@ -86,7 +84,10 @@ public class AuthService {
                 .active(true)
                 .build();
 
-        userRepository.save(user);
+        user = userRepository.save(user); // ✅ garante id preenchido
+
+        // ✅ cria Profile + Player automaticamente
+        profileService.createForUser(user.getId());
 
         var springUser = new User(
                 user.getEmail(),
@@ -98,9 +99,7 @@ public class AuthService {
         return new AuthResponse(jwt);
     }
 
-
-    public void updateAccount(UserAccount user ,UpdateAccountRequest request) {
-
+    public void updateAccount(UserAccount user, UpdateAccountRequest request) {
         if (request.email() != null && !Objects.equals(request.email(), user.getEmail())) {
             if (userRepository.existsByEmail(request.email())) {
                 throw new IllegalArgumentException("Email ja cadastrado");
@@ -116,10 +115,7 @@ public class AuthService {
             if (request.currentPassword() == null || request.currentPassword().isBlank()) {
                 throw new IllegalArgumentException("Senha atual obrigatoria para alterar a senha");
             }
-            boolean matches = passwordEncoder.matches(
-                    request.currentPassword(),
-                    user.getPasswordHash()
-            );
+            boolean matches = passwordEncoder.matches(request.currentPassword(), user.getPasswordHash());
             if (!matches) {
                 throw new IllegalArgumentException("Senha atual incorreta");
             }
