@@ -26,6 +26,11 @@ public class Store {
     @Column(unique = true)
     private String cnpj;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "profile_id",
+            foreignKey = @ForeignKey(name = "fk_stores_profile"))
+    private Profile profile;
+
     @OneToMany(mappedBy = "store", fetch = FetchType.LAZY,
             cascade = CascadeType.ALL, orphanRemoval = true)
     private java.util.List<Address> addresses = new java.util.ArrayList<>();
