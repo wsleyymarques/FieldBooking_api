@@ -25,7 +25,7 @@ public class AddressService {
     private final CepService cepService;
 
     @Transactional
-    public Address create(CreateAddressRequest req) {
+    public Address createForUser(UUID userId, CreateAddressRequest req) {
 
         // 1️⃣ Regra: profile OU store (XOR)
         if ((req.profileId() == null && req.storeId() == null) ||
@@ -70,14 +70,19 @@ public class AddressService {
         }
 
         // 5️⃣ Vincula o dono
+        Profile ownerProfile = requireProfileByUserId(userId);
         if (req.profileId() != null) {
-            Profile profile = profileRepository.findById(req.profileId())
-                    .orElseThrow(() -> new IllegalArgumentException("Profile not found"));
-            address.setProfile(profile);
+            if (!ownerProfile.getId().equals(req.profileId())) {
+                throw new IllegalArgumentException("Profile not owned by this user");
+            }
+            address.setProfile(ownerProfile);
             address.setStore(null);
         } else {
             Store store = storeRepository.findById(req.storeId())
                     .orElseThrow(() -> new IllegalArgumentException("Store not found"));
+            if (store.getProfile() == null || !store.getProfile().getId().equals(ownerProfile.getId())) {
+                throw new IllegalArgumentException("Store not owned by this profile");
+            }
             address.setStore(store);
             address.setProfile(null);
         }
@@ -86,9 +91,22 @@ public class AddressService {
     }
 
     @Transactional
-    public Address update(UUID addressId, UpdateAddressRequest req) {
+    public Address updateOwned(UUID userId, UUID addressId, UpdateAddressRequest req) {
         Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new IllegalArgumentException("Address not found"));
+
+        Profile ownerProfile = requireProfileByUserId(userId);
+        if (address.getStore() != null) {
+            Store store = address.getStore();
+            if (store.getProfile() == null || !store.getProfile().getId().equals(ownerProfile.getId())) {
+                throw new IllegalArgumentException("Store not owned by this profile");
+            }
+        }
+        if (address.getProfile() != null) {
+            if (!address.getProfile().getId().equals(ownerProfile.getId())) {
+                throw new IllegalArgumentException("Profile not owned by this user");
+            }
+        }
 
         // ✅ Não deixa mudar dono no update (segurança/consistência)
         // (store/profile ficam como estão)
@@ -163,8 +181,14 @@ public class AddressService {
                 null              // storeId
         );
 
-        return create(internal);
+        return createForUser(userId, internal);
+    }
+
+    private Profile requireProfileByUserId(UUID userId) {
+        return profileRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Profile not found"));
     }
 
 
 }
+
