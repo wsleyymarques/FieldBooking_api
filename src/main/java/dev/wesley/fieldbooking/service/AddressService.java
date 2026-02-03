@@ -1,6 +1,7 @@
 package dev.wesley.fieldbooking.service;
 
 import dev.wesley.fieldbooking.dto.CreateAddressRequest;
+import dev.wesley.fieldbooking.dto.CreateMyAddressRequest;
 import dev.wesley.fieldbooking.dto.UpdateAddressRequest;
 import dev.wesley.fieldbooking.model.Address;
 import dev.wesley.fieldbooking.model.Profile;
@@ -139,6 +140,31 @@ public class AddressService {
         return zip.replaceAll("\\D", "");
     }
 
+
+
+    @Transactional
+    public Address createForUserId(UUID userId, CreateMyAddressRequest req) {
+
+        Profile profile = profileRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Profile not found"));
+
+        CreateAddressRequest internal = new CreateAddressRequest(
+                req.country(),
+                req.zipCode(),
+                req.street(),
+                req.number(),
+                req.complement(),
+                req.neighborhood(),
+                req.city(),
+                req.state(),
+                req.latitude(),
+                req.longitude(),
+                profile.getId(),  // profileId
+                null              // storeId
+        );
+
+        return create(internal);
+    }
 
 
 }

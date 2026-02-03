@@ -11,6 +11,7 @@ public record UpdatePlayerRequest(
         BigDecimal rating,
         Integer goals,
         Integer assists,
+        Integer math,
         Integer matchesPlayed
 ) {}
 
