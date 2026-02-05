@@ -3,6 +3,7 @@ package dev.wesley.fieldbooking.controller;
 import dev.wesley.fieldbooking.dto.BookingCommand;
 import dev.wesley.fieldbooking.dto.BookingCommandResponse;
 import dev.wesley.fieldbooking.dto.BookingHoldRequest;
+import dev.wesley.fieldbooking.error.NotFoundException;
 import dev.wesley.fieldbooking.model.Booking;
 import dev.wesley.fieldbooking.model.UserAccount;
 import dev.wesley.fieldbooking.repositories.UserRepository;
@@ -31,7 +32,7 @@ public class BookingController {
             @RequestBody @Valid BookingHoldRequest req
     ) {
         UserAccount user = userRepository.findByEmail(principal.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
+                .orElseThrow(() -> new NotFoundException("Usuario nao encontrado"));
 
         UUID commandId = UUID.randomUUID();
         BookingCommand command = new BookingCommand(
@@ -59,7 +60,7 @@ public class BookingController {
     @GetMapping("/me")
     public List<Booking> listMine(@AuthenticationPrincipal User principal) {
         UserAccount user = userRepository.findByEmail(principal.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
+                .orElseThrow(() -> new NotFoundException("Usuario nao encontrado"));
         return bookingService.listByUser(user.getId());
     }
 
@@ -69,7 +70,7 @@ public class BookingController {
             @PathVariable UUID bookingId
     ) {
         UserAccount user = userRepository.findByEmail(principal.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
+                .orElseThrow(() -> new NotFoundException("Usuario nao encontrado"));
         return bookingService.confirm(user.getId(), bookingId);
     }
 
@@ -79,7 +80,7 @@ public class BookingController {
             @PathVariable UUID bookingId
     ) {
         UserAccount user = userRepository.findByEmail(principal.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
+                .orElseThrow(() -> new NotFoundException("Usuario nao encontrado"));
         return bookingService.cancel(user.getId(), bookingId);
     }
 }

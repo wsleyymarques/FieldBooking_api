@@ -3,6 +3,7 @@ package dev.wesley.fieldbooking.controller;
 import dev.wesley.fieldbooking.dto.CreateMyAddressRequest;
 import dev.wesley.fieldbooking.dto.CreateAddressRequest;
 import dev.wesley.fieldbooking.dto.UpdateAddressRequest;
+import dev.wesley.fieldbooking.error.NotFoundException;
 import dev.wesley.fieldbooking.model.Address;
 import dev.wesley.fieldbooking.model.UserAccount;
 import dev.wesley.fieldbooking.repositories.UserRepository;
@@ -31,7 +32,7 @@ public class AddressController {
         String email = principal.getUsername();
 
         UserAccount user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
+                .orElseThrow(() -> new NotFoundException("Usuario nao encontrado"));
 
         return addressService.createForUserId(user.getId(), req);
     }
@@ -42,7 +43,7 @@ public class AddressController {
             @RequestBody @Valid CreateAddressRequest req
     ) {
         UserAccount user = userRepository.findByEmail(principal.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
+                .orElseThrow(() -> new NotFoundException("Usuario nao encontrado"));
 
         return addressService.createForUser(user.getId(), req);
     }
@@ -54,7 +55,7 @@ public class AddressController {
             @RequestBody @Valid UpdateAddressRequest req
     ) {
         UserAccount user = userRepository.findByEmail(principal.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
+                .orElseThrow(() -> new NotFoundException("Usuario nao encontrado"));
 
         return addressService.updateOwned(user.getId(), addressId, req);
     }

@@ -4,6 +4,8 @@ import dev.wesley.fieldbooking.dto.AuthRequest;
 import dev.wesley.fieldbooking.dto.AuthResponse;
 import dev.wesley.fieldbooking.dto.RegisterRequest;
 import dev.wesley.fieldbooking.dto.UpdateAccountRequest;
+import dev.wesley.fieldbooking.error.BadRequestException;
+import dev.wesley.fieldbooking.error.ConflictException;
 import dev.wesley.fieldbooking.model.UserAccount;
 import dev.wesley.fieldbooking.repositories.UserRepository;
 import dev.wesley.fieldbooking.security.JwtService;
@@ -54,7 +56,7 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Email ja cadastrado");
+            throw new ConflictException("Email ja cadastrado");
         }
 
         String passwordHash = passwordEncoder.encode(request.password());
@@ -72,7 +74,7 @@ public class AuthService {
             firstName = nameParts[0];
             lastName = nameParts[1].isBlank() ? null : nameParts[1];
         } else {
-            throw new IllegalArgumentException("Nome é obrigatório");
+            throw new BadRequestException("Nome é obrigatório");
         }
 
         UserAccount user = UserAccount.builder()
@@ -102,7 +104,7 @@ public class AuthService {
     public void updateAccount(UserAccount user, UpdateAccountRequest request) {
         if (request.email() != null && !Objects.equals(request.email(), user.getEmail())) {
             if (userRepository.existsByEmail(request.email())) {
-                throw new IllegalArgumentException("Email ja cadastrado");
+                throw new ConflictException("Email ja cadastrado");
             }
             user.setEmail(request.email());
         }
@@ -113,11 +115,11 @@ public class AuthService {
 
         if (request.newPassword() != null && !request.newPassword().isBlank()) {
             if (request.currentPassword() == null || request.currentPassword().isBlank()) {
-                throw new IllegalArgumentException("Senha atual obrigatoria para alterar a senha");
+                throw new BadRequestException("Senha atual obrigatoria para alterar a senha");
             }
             boolean matches = passwordEncoder.matches(request.currentPassword(), user.getPasswordHash());
             if (!matches) {
-                throw new IllegalArgumentException("Senha atual incorreta");
+                throw new BadRequestException("Senha atual incorreta");
             }
 
             String newHash = passwordEncoder.encode(request.newPassword());

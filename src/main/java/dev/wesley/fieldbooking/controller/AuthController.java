@@ -4,6 +4,7 @@ import dev.wesley.fieldbooking.dto.AuthRequest;
 import dev.wesley.fieldbooking.dto.AuthResponse;
 import dev.wesley.fieldbooking.dto.RegisterRequest;
 import dev.wesley.fieldbooking.dto.UpdateAccountRequest;
+import dev.wesley.fieldbooking.error.NotFoundException;
 import dev.wesley.fieldbooking.model.UserAccount;
 import dev.wesley.fieldbooking.repositories.UserRepository;
 import dev.wesley.fieldbooking.service.AuthService;
@@ -41,7 +42,7 @@ public class AuthController {
         String email = main.getUsername();
 
         UserAccount user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
+                .orElseThrow(() -> new NotFoundException("Usuario nao encontrado"));
 
         authService.updateAccount(user, request);
         return ResponseEntity.noContent().build();

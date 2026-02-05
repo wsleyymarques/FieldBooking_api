@@ -1,6 +1,9 @@
 package dev.wesley.fieldbooking.service;
 
 import dev.wesley.fieldbooking.dto.UpdatePlayerRequest;
+import dev.wesley.fieldbooking.error.BadRequestException;
+import dev.wesley.fieldbooking.error.ConflictException;
+import dev.wesley.fieldbooking.error.NotFoundException;
 import dev.wesley.fieldbooking.model.Player;
 import dev.wesley.fieldbooking.model.Profile;
 import dev.wesley.fieldbooking.model.Enums.SkillLevel;
@@ -26,12 +29,12 @@ public class PlayerService {
     @Transactional
     public Player createForProfile(UUID profileId) {
         Profile profile = profileRepository.findById(profileId)
-                .orElseThrow(() -> new IllegalArgumentException("Profile not found"));
+                .orElseThrow(() -> new NotFoundException("Profile not found"));
 
         // se já existe, retorna (ou lança erro — você escolhe)
         if (playerRepository.existsById(profileId)) {
             return playerRepository.findById(profileId)
-                    .orElseThrow(() -> new IllegalStateException("Player not found but existsById returned true"));
+                    .orElseThrow(() -> new ConflictException("Player not found but existsById returned true"));
         }
 
         Player player = new Player();
@@ -49,17 +52,17 @@ public class PlayerService {
     @Transactional
     public Player updateByUserId(UUID userId, UpdatePlayerRequest req) {
         Profile profile = profileRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Profile not found"));
+                .orElseThrow(() -> new NotFoundException("Profile not found"));
 
         Player player = playerRepository.findById(profile.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+                .orElseThrow(() -> new NotFoundException("Player not found"));
 
         applyUpdate(player, req);
         return playerRepository.save(player);
     }
 
     private void applyUpdate(Player player, UpdatePlayerRequest req) {
-        if (req == null) throw new IllegalArgumentException("Request is required");
+        if (req == null) throw new BadRequestException("Request is required");
 
         // Aqui você decide se é PUT (seta null) ou PATCH (só altera se != null)
         if (req.skillLevel() != null) player.setSkillLevel(req.skillLevel());

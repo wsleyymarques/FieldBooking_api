@@ -1,6 +1,10 @@
 package dev.wesley.fieldbooking.service;
 
 import dev.wesley.fieldbooking.dto.UpdateProfileRequest;
+import dev.wesley.fieldbooking.error.BadRequestException;
+import dev.wesley.fieldbooking.error.ConflictException;
+import dev.wesley.fieldbooking.error.ExternalServiceException;
+import dev.wesley.fieldbooking.error.NotFoundException;
 import dev.wesley.fieldbooking.model.Profile;
 import dev.wesley.fieldbooking.model.UserAccount;
 import dev.wesley.fieldbooking.repositories.ProfileRepository;
@@ -10,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.UUID;
 
 @Service
@@ -30,10 +33,10 @@ public class ProfileService {
     @Transactional
     public Profile createForUser(UUID userId, MultipartFile avatar) {
         UserAccount user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
         if (profileRepository.existsByUserId(userId)) {
-            throw new IllegalArgumentException("Profile already exists for this user");
+            throw new ConflictException("Profile already exists for this user");
         }
 
         Profile profile = new Profile();
@@ -45,7 +48,7 @@ public class ProfileService {
                 var upload = storageService.upload("avatars", userId + "/avatar.webp", avatar, true);
                 profile.setAvatarUrl(upload.publicUrl());
             } catch (Exception e) {
-                throw new IllegalArgumentException("Failed to upload avatar", e);
+                throw new ExternalServiceException("Failed to upload avatar", e);
             }
         }
 
@@ -62,10 +65,10 @@ public class ProfileService {
 
     @Transactional
     public Profile updateByUserId(UUID userId, UpdateProfileRequest req, MultipartFile avatar) {
-        if (req == null) throw new IllegalArgumentException("Request is required");
+        if (req == null) throw new BadRequestException("Request is required");
 
         Profile profile = profileRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Profile not found"));
+                .orElseThrow(() -> new NotFoundException("Profile not found"));
 
         if (req.birthDate() != null) profile.setBirthDate(req.birthDate());
         if (req.bio() != null) profile.setBio(req.bio());
@@ -75,7 +78,7 @@ public class ProfileService {
                 var upload = storageService.upload("avatars", userId + "/avatar.webp", avatar, true);
                 profile.setAvatarUrl(upload.publicUrl());
             } catch (Exception e) {
-                throw new IllegalArgumentException("Failed to upload avatar", e);
+                throw new ExternalServiceException("Failed to upload avatar", e);
             }
         }
 

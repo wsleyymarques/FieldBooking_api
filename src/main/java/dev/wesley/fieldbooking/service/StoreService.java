@@ -2,6 +2,9 @@ package dev.wesley.fieldbooking.service;
 
 import dev.wesley.fieldbooking.dto.CreateStoreRequest;
 import dev.wesley.fieldbooking.dto.UpdateStoreRequest;
+import dev.wesley.fieldbooking.error.BadRequestException;
+import dev.wesley.fieldbooking.error.ForbiddenException;
+import dev.wesley.fieldbooking.error.NotFoundException;
 import dev.wesley.fieldbooking.model.Profile;
 import dev.wesley.fieldbooking.model.Store;
 import dev.wesley.fieldbooking.repositories.ProfileRepository;
@@ -23,10 +26,10 @@ public class StoreService {
 
     @Transactional
     public Store createForUser(UUID userId, CreateStoreRequest req) {
-        if (req == null) throw new IllegalArgumentException("Request is required");
+        if (req == null) throw new BadRequestException("Request is required");
 
         Profile profile = profileRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Profile not found"));
+                .orElseThrow(() -> new NotFoundException("Profile not found"));
 
         Store store = new Store();
         store.setProfile(profile);
@@ -45,7 +48,7 @@ public class StoreService {
     @Transactional(readOnly = true)
     public List<Store> listByUser(UUID userId) {
         Profile profile = profileRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Profile not found"));
+                .orElseThrow(() -> new NotFoundException("Profile not found"));
 
         return storeRepository.findByProfileId(profile.getId());
     }
@@ -53,12 +56,12 @@ public class StoreService {
     @Transactional(readOnly = true)
     public Store getById(UUID storeId) {
         return storeRepository.findById(storeId)
-                .orElseThrow(() -> new IllegalArgumentException("Store not found"));
+                .orElseThrow(() -> new NotFoundException("Store not found"));
     }
 
     @Transactional
     public Store update(UUID storeId, UUID userId, UpdateStoreRequest req) {
-        if (req == null) throw new IllegalArgumentException("Request is required");
+        if (req == null) throw new BadRequestException("Request is required");
 
         Store store = requireOwnedStore(storeId, userId);
 
@@ -84,13 +87,13 @@ public class StoreService {
 
     private Store requireOwnedStore(UUID storeId, UUID userId) {
         Profile profile = profileRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Profile not found"));
+                .orElseThrow(() -> new NotFoundException("Profile not found"));
 
         Store store = storeRepository.findById(storeId)
-                .orElseThrow(() -> new IllegalArgumentException("Store not found"));
+                .orElseThrow(() -> new NotFoundException("Store not found"));
 
         if (store.getProfile() == null || !store.getProfile().getId().equals(profile.getId())) {
-            throw new IllegalArgumentException("Store not owned by this profile");
+            throw new ForbiddenException("Store not owned by this profile");
         }
 
         return store;

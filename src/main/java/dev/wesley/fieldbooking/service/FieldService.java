@@ -2,6 +2,9 @@ package dev.wesley.fieldbooking.service;
 
 import dev.wesley.fieldbooking.dto.CreateFieldRequest;
 import dev.wesley.fieldbooking.dto.UpdateFieldRequest;
+import dev.wesley.fieldbooking.error.BadRequestException;
+import dev.wesley.fieldbooking.error.ForbiddenException;
+import dev.wesley.fieldbooking.error.NotFoundException;
 import dev.wesley.fieldbooking.model.Field;
 import dev.wesley.fieldbooking.model.Profile;
 import dev.wesley.fieldbooking.model.Store;
@@ -25,14 +28,14 @@ public class FieldService {
 
     @Transactional
     public Field createForUser(UUID userId, CreateFieldRequest req) {
-        if (req == null) throw new IllegalArgumentException("Request is required");
+        if (req == null) throw new BadRequestException("Request is required");
 
         Profile profile = requireProfileByUserId(userId);
         Store store = storeRepository.findById(req.storeId())
-                .orElseThrow(() -> new IllegalArgumentException("Store not found"));
+                .orElseThrow(() -> new NotFoundException("Store not found"));
 
         if (store.getProfile() == null || !store.getProfile().getId().equals(profile.getId())) {
-            throw new IllegalArgumentException("Store not owned by this profile");
+            throw new ForbiddenException("Store not owned by this profile");
         }
 
         Field field = new Field();
@@ -52,7 +55,7 @@ public class FieldService {
     @Transactional(readOnly = true)
     public Field getById(UUID fieldId) {
         return fieldRepository.findById(fieldId)
-                .orElseThrow(() -> new IllegalArgumentException("Field not found"));
+                .orElseThrow(() -> new NotFoundException("Field not found"));
     }
 
     @Transactional(readOnly = true)
@@ -62,7 +65,7 @@ public class FieldService {
 
     @Transactional
     public Field update(UUID userId, UUID fieldId, UpdateFieldRequest req) {
-        if (req == null) throw new IllegalArgumentException("Request is required");
+        if (req == null) throw new BadRequestException("Request is required");
 
         Field field = requireOwnedField(userId, fieldId);
 
@@ -88,17 +91,17 @@ public class FieldService {
     private Field requireOwnedField(UUID userId, UUID fieldId) {
         Profile profile = requireProfileByUserId(userId);
         Field field = fieldRepository.findById(fieldId)
-                .orElseThrow(() -> new IllegalArgumentException("Field not found"));
+                .orElseThrow(() -> new NotFoundException("Field not found"));
 
         Store store = field.getStore();
         if (store.getProfile() == null || !store.getProfile().getId().equals(profile.getId())) {
-            throw new IllegalArgumentException("Store not owned by this profile");
+            throw new ForbiddenException("Store not owned by this profile");
         }
         return field;
     }
 
     private Profile requireProfileByUserId(UUID userId) {
         return profileRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Profile not found"));
+                .orElseThrow(() -> new NotFoundException("Profile not found"));
     }
 }

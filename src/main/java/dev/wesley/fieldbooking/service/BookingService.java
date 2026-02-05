@@ -2,6 +2,10 @@ package dev.wesley.fieldbooking.service;
 
 import dev.wesley.fieldbooking.config.RabbitConfig;
 import dev.wesley.fieldbooking.dto.BookingCommand;
+import dev.wesley.fieldbooking.error.BadRequestException;
+import dev.wesley.fieldbooking.error.ConflictException;
+import dev.wesley.fieldbooking.error.ForbiddenException;
+import dev.wesley.fieldbooking.error.NotFoundException;
 import dev.wesley.fieldbooking.model.Booking;
 import dev.wesley.fieldbooking.model.Enums.BookingStatus;
 import dev.wesley.fieldbooking.model.Enums.FieldStatus;
@@ -51,15 +55,15 @@ public class BookingService {
         }
 
         Field field = fieldRepository.findById(command.fieldId())
-                .orElseThrow(() -> new IllegalArgumentException("Field not found"));
+                .orElseThrow(() -> new NotFoundException("Field not found"));
 
         if (field.getStatus() != FieldStatus.AVAILABLE) {
-            throw new IllegalArgumentException("Field not available");
+            throw new ConflictException("Field not available");
         }
 
         if (command.startAt() == null || command.endAt() == null ||
                 !command.endAt().isAfter(command.startAt())) {
-            throw new IllegalArgumentException("Invalid booking time range");
+            throw new BadRequestException("Invalid booking time range");
         }
 
         boolean overlap = bookingRepository.existsOverlap(
@@ -69,11 +73,11 @@ public class BookingService {
                 BookingStatus.CANCELLED
         );
         if (overlap) {
-            throw new IllegalArgumentException("Time slot not available");
+            throw new ConflictException("Time slot not available");
         }
 
         UserAccount user = userRepository.findById(command.userId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
         Booking booking = new Booking();
         booking.setField(field);
@@ -91,13 +95,13 @@ public class BookingService {
     @Transactional(readOnly = true)
     public Booking getById(UUID bookingId) {
         return bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new IllegalArgumentException("Booking not found"));
+                .orElseThrow(() -> new NotFoundException("Booking not found"));
     }
 
     @Transactional(readOnly = true)
     public Booking getByCommandId(UUID commandId) {
         return bookingRepository.findByCommandId(commandId)
-                .orElseThrow(() -> new IllegalArgumentException("Booking not found"));
+                .orElseThrow(() -> new NotFoundException("Booking not found"));
     }
 
     @Transactional(readOnly = true)
@@ -108,15 +112,15 @@ public class BookingService {
     @Transactional
     public Booking confirm(UUID userId, UUID bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new IllegalArgumentException("Booking not found"));
+                .orElseThrow(() -> new NotFoundException("Booking not found"));
 
         if (!booking.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("Booking not owned by this user");
+            throw new ForbiddenException("Booking not owned by this user");
         }
 
         if (booking.getStatus() == BookingStatus.CANCELLED ||
                 booking.getStatus() == BookingStatus.COMPLETED) {
-            throw new IllegalArgumentException("Booking cannot be confirmed");
+            throw new ConflictException("Booking cannot be confirmed");
         }
 
         booking.setStatus(BookingStatus.CONFIRMED);
@@ -126,10 +130,10 @@ public class BookingService {
     @Transactional
     public Booking cancel(UUID userId, UUID bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new IllegalArgumentException("Booking not found"));
+                .orElseThrow(() -> new NotFoundException("Booking not found"));
 
         if (!booking.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("Booking not owned by this user");
+            throw new ForbiddenException("Booking not owned by this user");
         }
 
         if (booking.getStatus() == BookingStatus.CANCELLED) {

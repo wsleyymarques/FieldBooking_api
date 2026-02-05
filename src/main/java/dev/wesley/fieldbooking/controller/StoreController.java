@@ -2,6 +2,7 @@ package dev.wesley.fieldbooking.controller;
 
 import dev.wesley.fieldbooking.dto.CreateStoreRequest;
 import dev.wesley.fieldbooking.dto.UpdateStoreRequest;
+import dev.wesley.fieldbooking.error.NotFoundException;
 import dev.wesley.fieldbooking.model.Store;
 import dev.wesley.fieldbooking.model.UserAccount;
 import dev.wesley.fieldbooking.repositories.UserRepository;
@@ -30,7 +31,7 @@ public class StoreController {
             @RequestBody @Valid CreateStoreRequest req
     ) {
         UserAccount user = userRepository.findByEmail(principal.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
+                .orElseThrow(() -> new NotFoundException("Usuario nao encontrado"));
 
         return storeService.createForUser(user.getId(), req);
     }
@@ -38,7 +39,7 @@ public class StoreController {
     @GetMapping("/me")
     public List<Store> listMyStores(@AuthenticationPrincipal User principal) {
         UserAccount user = userRepository.findByEmail(principal.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
+                .orElseThrow(() -> new NotFoundException("Usuario nao encontrado"));
 
         return storeService.listByUser(user.getId());
     }
@@ -55,7 +56,7 @@ public class StoreController {
             @RequestBody @Valid UpdateStoreRequest req
     ) {
         UserAccount user = userRepository.findByEmail(principal.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
+                .orElseThrow(() -> new NotFoundException("Usuario nao encontrado"));
 
         return storeService.update(storeId, user.getId(), req);
     }
@@ -66,7 +67,7 @@ public class StoreController {
             @PathVariable UUID storeId
     ) {
         UserAccount user = userRepository.findByEmail(principal.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
+                .orElseThrow(() -> new NotFoundException("Usuario nao encontrado"));
 
         storeService.delete(storeId, user.getId());
         return ResponseEntity.noContent().build();

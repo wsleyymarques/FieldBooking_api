@@ -2,6 +2,7 @@ package dev.wesley.fieldbooking.controller;
 
 import dev.wesley.fieldbooking.dto.CreateFieldRequest;
 import dev.wesley.fieldbooking.dto.UpdateFieldRequest;
+import dev.wesley.fieldbooking.error.NotFoundException;
 import dev.wesley.fieldbooking.model.Field;
 import dev.wesley.fieldbooking.model.UserAccount;
 import dev.wesley.fieldbooking.repositories.UserRepository;
@@ -30,7 +31,7 @@ public class FieldController {
             @RequestBody @Valid CreateFieldRequest req
     ) {
         UserAccount user = userRepository.findByEmail(principal.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
+                .orElseThrow(() -> new NotFoundException("Usuario nao encontrado"));
 
         return fieldService.createForUser(user.getId(), req);
     }
@@ -52,7 +53,7 @@ public class FieldController {
             @RequestBody @Valid UpdateFieldRequest req
     ) {
         UserAccount user = userRepository.findByEmail(principal.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
+                .orElseThrow(() -> new NotFoundException("Usuario nao encontrado"));
 
         return fieldService.update(user.getId(), fieldId, req);
     }
@@ -63,7 +64,7 @@ public class FieldController {
             @PathVariable UUID fieldId
     ) {
         UserAccount user = userRepository.findByEmail(principal.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
+                .orElseThrow(() -> new NotFoundException("Usuario nao encontrado"));
 
         fieldService.delete(user.getId(), fieldId);
         return ResponseEntity.noContent().build();

@@ -1,6 +1,7 @@
 package dev.wesley.fieldbooking.service;
 
 import dev.wesley.fieldbooking.dto.UploadResult;
+import dev.wesley.fieldbooking.error.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -94,12 +95,12 @@ public class SupabaseStorageService {
 
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("Arquivo obrigatório");
+            throw new BadRequestException("Arquivo obrigatório");
         }
 
         long maxBytes = 5L * 1024 * 1024; // 5MB (ajuste)
         if (file.getSize() > maxBytes) {
-            throw new IllegalArgumentException("Arquivo grande demais (max 5MB)");
+            throw new BadRequestException("Arquivo grande demais (max 5MB)");
         }
 
         // Se quiser restringir por tipo (recomendado), descomente:
