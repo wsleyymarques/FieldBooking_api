@@ -1,7 +1,10 @@
 package dev.wesley.fieldbooking.config;
 
-import dev.wesley.fieldbooking.security.JwtAuthenticationFilter;
+import dev.wesley.fieldbooking.middleware.ClientContextFilter;
+import dev.wesley.fieldbooking.middleware.ClientKeyFilter;
+import dev.wesley.fieldbooking.middleware.RequestTrackingFilter;
 import dev.wesley.fieldbooking.security.CustomUserDetailsService;
+import dev.wesley.fieldbooking.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,11 +19,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
@@ -28,45 +27,29 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final CustomUserDetailsService userDetailsService;
+    private final ClientKeyFilter clientKeyFilter;
+    private final ClientContextFilter clientContextFilter;
+    private final RequestTrackingFilter requestTrackingFilter;
+    private final CorsConfigurationSource corsConfigurationSource;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 // 🔹 habilita CORS e usa o bean corsConfigurationSource()
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/actuator/health", "/error").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/tracking/**", "/actuator/health", "/error").permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(clientKeyFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(jwtAuthFilter, ClientKeyFilter.class)
+                .addFilterAfter(clientContextFilter, JwtAuthenticationFilter.class)
+                .addFilterAfter(requestTrackingFilter, ClientContextFilter.class);
 
         return http.build();
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-
-        // 🔹 origem do seu front (porta 8081)
-        config.setAllowedOrigins(List.of(
-                "http://localhost:8081"
-        ));
-
-        // métodos permitidos
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-
-        // cabeçalhos permitidos
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
-
-        // se precisar mandar cookies/credenciais
-        config.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
     }
 
     @Bean

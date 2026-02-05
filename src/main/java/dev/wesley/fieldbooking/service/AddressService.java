@@ -3,6 +3,9 @@ package dev.wesley.fieldbooking.service;
 import dev.wesley.fieldbooking.dto.CreateAddressRequest;
 import dev.wesley.fieldbooking.dto.CreateMyAddressRequest;
 import dev.wesley.fieldbooking.dto.UpdateAddressRequest;
+import dev.wesley.fieldbooking.error.BadRequestException;
+import dev.wesley.fieldbooking.error.ForbiddenException;
+import dev.wesley.fieldbooking.error.NotFoundException;
 import dev.wesley.fieldbooking.model.Address;
 import dev.wesley.fieldbooking.model.Profile;
 import dev.wesley.fieldbooking.model.Store;
@@ -30,7 +33,7 @@ public class AddressService {
         // 1️⃣ Regra: profile OU store (XOR)
         if ((req.profileId() == null && req.storeId() == null) ||
                 (req.profileId() != null && req.storeId() != null)) {
-            throw new IllegalArgumentException(
+            throw new BadRequestException(
                     "You must provide either profileId or storeId"
             );
         }
@@ -52,7 +55,7 @@ public class AddressService {
             var r = cepService.lookup(cep);
 
             if (r == null || Boolean.TRUE.equals(r.error())) {
-                throw new IllegalArgumentException("Invalid ZIP code");
+                throw new BadRequestException("Invalid ZIP code");
             }
 
             address.setZipCode(cep);
@@ -73,15 +76,15 @@ public class AddressService {
         Profile ownerProfile = requireProfileByUserId(userId);
         if (req.profileId() != null) {
             if (!ownerProfile.getId().equals(req.profileId())) {
-                throw new IllegalArgumentException("Profile not owned by this user");
+                throw new ForbiddenException("Profile not owned by this user");
             }
             address.setProfile(ownerProfile);
             address.setStore(null);
         } else {
             Store store = storeRepository.findById(req.storeId())
-                    .orElseThrow(() -> new IllegalArgumentException("Store not found"));
+                    .orElseThrow(() -> new NotFoundException("Store not found"));
             if (store.getProfile() == null || !store.getProfile().getId().equals(ownerProfile.getId())) {
-                throw new IllegalArgumentException("Store not owned by this profile");
+                throw new ForbiddenException("Store not owned by this profile");
             }
             address.setStore(store);
             address.setProfile(null);
@@ -93,18 +96,18 @@ public class AddressService {
     @Transactional
     public Address updateOwned(UUID userId, UUID addressId, UpdateAddressRequest req) {
         Address address = addressRepository.findById(addressId)
-                .orElseThrow(() -> new IllegalArgumentException("Address not found"));
+                .orElseThrow(() -> new NotFoundException("Address not found"));
 
         Profile ownerProfile = requireProfileByUserId(userId);
         if (address.getStore() != null) {
             Store store = address.getStore();
             if (store.getProfile() == null || !store.getProfile().getId().equals(ownerProfile.getId())) {
-                throw new IllegalArgumentException("Store not owned by this profile");
+                throw new ForbiddenException("Store not owned by this profile");
             }
         }
         if (address.getProfile() != null) {
             if (!address.getProfile().getId().equals(ownerProfile.getId())) {
-                throw new IllegalArgumentException("Profile not owned by this user");
+                throw new ForbiddenException("Profile not owned by this user");
             }
         }
 
@@ -127,7 +130,7 @@ public class AddressService {
             if (!normalized.isBlank()) {
                 var r = cepService.lookup(normalized);
                 if (Boolean.TRUE.equals(r.error())) {
-                    throw new IllegalArgumentException("Invalid ZIP code");
+                    throw new BadRequestException("Invalid ZIP code");
                 }
 
                 address.setZipCode(normalized);
@@ -164,7 +167,7 @@ public class AddressService {
     public Address createForUserId(UUID userId, CreateMyAddressRequest req) {
 
         Profile profile = profileRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Profile not found"));
+                .orElseThrow(() -> new NotFoundException("Profile not found"));
 
         CreateAddressRequest internal = new CreateAddressRequest(
                 req.country(),
@@ -186,7 +189,7 @@ public class AddressService {
 
     private Profile requireProfileByUserId(UUID userId) {
         return profileRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Profile not found"));
+                .orElseThrow(() -> new NotFoundException("Profile not found"));
     }
 
 

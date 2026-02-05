@@ -1,0 +1,3 @@
+ALTER TABLE tracking_event
+    ADD COLUMN IF NOT EXISTS anonymous_id VARCHAR(100) NULL,
+    ADD COLUMN IF NOT EXISTS client_type VARCHAR(30) NULL;

@@ -1,12 +1,12 @@
 package dev.wesley.fieldbooking.controller;
 
-import dev.wesley.fieldbooking.dto.CreateStoreRequest;
-import dev.wesley.fieldbooking.dto.UpdateStoreRequest;
+import dev.wesley.fieldbooking.dto.CreateFieldRequest;
+import dev.wesley.fieldbooking.dto.UpdateFieldRequest;
 import dev.wesley.fieldbooking.error.NotFoundException;
-import dev.wesley.fieldbooking.model.Store;
+import dev.wesley.fieldbooking.model.Field;
 import dev.wesley.fieldbooking.model.UserAccount;
 import dev.wesley.fieldbooking.repositories.UserRepository;
-import dev.wesley.fieldbooking.service.StoreService;
+import dev.wesley.fieldbooking.service.FieldService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,58 +18,55 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/stores")
+@RequestMapping("/api/fields")
 @RequiredArgsConstructor
-public class StoreController {
+public class FieldController {
 
-    private final StoreService storeService;
+    private final FieldService fieldService;
     private final UserRepository userRepository;
 
-    @PostMapping("/me")
-    public Store createMyStore(
+    @PostMapping
+    public Field create(
             @AuthenticationPrincipal User principal,
-            @RequestBody @Valid CreateStoreRequest req
+            @RequestBody @Valid CreateFieldRequest req
     ) {
         UserAccount user = userRepository.findByEmail(principal.getUsername())
                 .orElseThrow(() -> new NotFoundException("Usuario nao encontrado"));
 
-        return storeService.createForUser(user.getId(), req);
+        return fieldService.createForUser(user.getId(), req);
     }
 
-    @GetMapping("/me")
-    public List<Store> listMyStores(@AuthenticationPrincipal User principal) {
-        UserAccount user = userRepository.findByEmail(principal.getUsername())
-                .orElseThrow(() -> new NotFoundException("Usuario nao encontrado"));
-
-        return storeService.listByUser(user.getId());
+    @GetMapping("/{fieldId}")
+    public Field getById(@PathVariable UUID fieldId) {
+        return fieldService.getById(fieldId);
     }
 
-    @GetMapping("/{storeId}")
-    public Store getById(@PathVariable UUID storeId) {
-        return storeService.getById(storeId);
+    @GetMapping("/store/{storeId}")
+    public List<Field> listByStore(@PathVariable UUID storeId) {
+        return fieldService.listByStore(storeId);
     }
 
-    @PutMapping("/{storeId}")
-    public Store update(
+    @PutMapping("/{fieldId}")
+    public Field update(
             @AuthenticationPrincipal User principal,
-            @PathVariable UUID storeId,
-            @RequestBody @Valid UpdateStoreRequest req
+            @PathVariable UUID fieldId,
+            @RequestBody @Valid UpdateFieldRequest req
     ) {
         UserAccount user = userRepository.findByEmail(principal.getUsername())
                 .orElseThrow(() -> new NotFoundException("Usuario nao encontrado"));
 
-        return storeService.update(storeId, user.getId(), req);
+        return fieldService.update(user.getId(), fieldId, req);
     }
 
-    @DeleteMapping("/{storeId}")
+    @DeleteMapping("/{fieldId}")
     public ResponseEntity<Void> delete(
             @AuthenticationPrincipal User principal,
-            @PathVariable UUID storeId
+            @PathVariable UUID fieldId
     ) {
         UserAccount user = userRepository.findByEmail(principal.getUsername())
                 .orElseThrow(() -> new NotFoundException("Usuario nao encontrado"));
 
-        storeService.delete(storeId, user.getId());
+        fieldService.delete(user.getId(), fieldId);
         return ResponseEntity.noContent().build();
     }
 }

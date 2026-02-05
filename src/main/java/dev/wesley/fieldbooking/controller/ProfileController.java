@@ -2,6 +2,7 @@ package dev.wesley.fieldbooking.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.wesley.fieldbooking.dto.UpdateProfileRequest;
+import dev.wesley.fieldbooking.error.NotFoundException;
 import dev.wesley.fieldbooking.model.UserAccount;
 import dev.wesley.fieldbooking.repositories.UserRepository;
 import dev.wesley.fieldbooking.service.ProfileService;
@@ -31,7 +32,7 @@ public class ProfileController {
 
         String email = principal.getUsername();
         UserAccount user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
+                .orElseThrow(() -> new NotFoundException("Usuario nao encontrado"));
 
         UpdateProfileRequest req = objectMapper.readValue(data, UpdateProfileRequest.class);
 

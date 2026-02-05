@@ -1,0 +1,7 @@
+CREATE TABLE api_config (
+    id UUID PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    security_key VARCHAR(120) NOT NULL UNIQUE,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
